@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Consulta de Projetos</title>
+    <link rel="stylesheet" href="css/style_dashboard.css">
+</head>
+
+<body>
+    <div class="sidebar">
+        <button id="novoBtn" onclick="abrirModalNovoProjeto()">Novo Projeto</button>
+        <button id="continuarBtn" disabled onclick="continuarProjeto()">Continuar</button>
+        <button id="editarBtn" disabled onclick="abrirModal()">Editar</button>
+        <button id="concluirBtn" disabled onclick="concluirProjeto()">Concluir</button>
+        <button id="excluirBtn" disabled onclick="excluirProjetoSelecionado()">Excluir Projeto</button>
+        <button id="relatorioBtn" disabled onclick="Relatorio()">Relatório</button>
+    </div>
+
+    <div class="container">
+        <h1>Dashboard - Consulta de Projetos</h1>
+
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Pesquisar por cidade, empresa ou concessionária">
+            <button id="searchBtn">Pesquisar</button>
+        </div>
+
+        <div class="filter-status">
+            <label for="statusFilter">Filtrar por status:</label>
+            <select id="statusFilter">
+                <option value="">Todos</option>
+                <option value="em andamento">Em Andamento</option>
+                <option value="finalizado">Finalizado</option>
+            </select>
+        </div>
+
+        <div id="loading" class="loading">Carregando projetos...</div>
+
+        <table id="projetosTable">
+            <thead>
+                <tr>
+                    <th>Nome do Projeto</th>
+                    <th>Cidade</th>
+                    <th>Empresa</th>
+                    <th>Concessionária</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="pagination" id="pagination"></div>
+        <div class="error-message" id="errorMessage"></div>
+    </div>
+
+    <!-- Modal para editar projeto -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeModal">&times;</span>
+                <h2>Editar Projeto</h2>
+            </div>
+            <div class="modal-body">
+                <label for="modalNome">Nome do Projeto</label>
+                <input type="text" id="modalNome">
+
+                <label for="modalCidade">Cidade</label>
+                <input type="text" id="modalCidade">
+
+                <label for="modalEmpresa">Empresa</label>
+                <input type="text" id="modalEmpresa">
+
+                <label for="modalConcessionaria">Concessionária</label>
+                <input type="text" id="modalConcessionaria">
+
+                <label for="modalStatus">Status</label>
+                <select id="modalStatus">
+                    <option value="em andamento">Em Andamento</option>
+                    <option value="finalizado">Finalizado</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button id="saveBtn" onclick="salvarProjetoEditado()" disabled>Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para criar novo projeto -->
+    <div id="novoProjetoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeNovoProjetoModal">&times;</span>
+                <h2>Novo Projeto</h2>
+            </div>
+            <div class="modal-body">
+                <label for="novoModalNome">Nome do Projeto</label>
+                <input type="text" id="novoModalNome">
+
+                <label for="novoModalCidade">Cidade</label>
+                <input type="text" id="novoModalCidade">
+
+                <label for="novoModalEmpresa">Empresa</label>
+                <input type="text" id="novoModalEmpresa">
+
+                <label for="novoModalConcessionaria">Concessionária</label>
+                <input type="text" id="novoModalConcessionaria">
+
+                <label for="novoModalStatus">Status</label>
+                <select id="novoModalStatus">
+                    <option value="em andamento">Em Andamento</option>
+                    <option value="finalizado">Finalizado</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button id="saveNovoProjetoBtn" onclick="salvarNovoProjeto()" disabled>Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Todo o código JavaScript que você já tinha para manipulação do DOM, controle de modais, fetch de dados e outras funcionalidades, permanece o mesmo.
+        let projetoSelecionadoId = null;
+    let projetoSelecionado = null;
+
+    // Função para abrir o modal de novo projeto
+    function abrirModalNovoProjeto() {
+        const novoProjetoModal = document.getElementById('novoProjetoModal');
+        if (novoProjetoModal) {
+            novoProjetoModal.style.display = 'block';
+        } else {
+            console.error('Modal de novo projeto não encontrado');
+        }
+    }
+
+    // Evento para abrir o modal quando o botão "Novo Projeto" for clicado
+    document.getElementById('novoBtn').addEventListener('click', abrirModalNovoProjeto);
+
+    // Função para fechar o modal de novo projeto ao clicar no "x"
+    document.getElementById('closeNovoProjetoModal').onclick = function () {
+        const novoProjetoModal = document.getElementById('novoProjetoModal');
+        if (novoProjetoModal) {
+            novoProjetoModal.style.display = 'none';
+        }
+    };
+
+    // Função para salvar um novo projeto
+    function salvarNovoProjeto() {
+        const nome_projeto = document.getElementById('novoModalNome').value;
+        const cidade = document.getElementById('novoModalCidade').value;
+        const empresa = document.getElementById('novoModalEmpresa').value;
+        const concessionaria = document.getElementById('novoModalConcessionaria').value;
+        const status = document.getElementById('novoModalStatus').value;
+
+        if (!nome_projeto || !cidade || !empresa || !concessionaria) {
+            alert("Por favor, preencha todos os campos.");
+            return;
+        }
+
+        fetch('https://us-central1-akraquercem.cloudfunctions.net/api/projetos/novo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome_projeto, cidade, empresa, concessionaria, status })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Novo projeto criado com sucesso!');
+                document.getElementById('novoProjetoModal').style.display = 'none';
+                fetchProjects(); // Atualiza a lista de projetos
+            } else {
+                alert('Erro ao criar o projeto.');
+            }
+        })
+        .catch(error => {
+            alert('Erro ao criar projeto.');
+        });
+    }
+
+    // Função para verificar se os campos de novo projeto estão preenchidos
+    function verificarCamposNovoProjeto() {
+        const nome_projeto = document.getElementById('novoModalNome').value;
+        const cidade = document.getElementById('novoModalCidade').value;
+        const empresa = document.getElementById('novoModalEmpresa').value;
+        const concessionaria = document.getElementById('novoModalConcessionaria').value;
+
+        const botaoSalvarNovoProjeto = document.getElementById('saveNovoProjetoBtn');
+        botaoSalvarNovoProjeto.disabled = !nome_projeto || !cidade || !empresa || !concessionaria;
+    }
+
+    // Eventos de verificação de campos do modal de novo projeto
+    document.getElementById('novoModalNome').addEventListener('input', verificarCamposNovoProjeto);
+    document.getElementById('novoModalCidade').addEventListener('input', verificarCamposNovoProjeto);
+    document.getElementById('novoModalEmpresa').addEventListener('input', verificarCamposNovoProjeto);
+    document.getElementById('novoModalConcessionaria').addEventListener('input', verificarCamposNovoProjeto);
+
+    // Função para continuar o projeto
+    function continuarProjeto() {
+        if (projetoSelecionadoId) {
+            window.location.href = `index3_Corpo.html?projetoId=${projetoSelecionadoId}`;
+        } else {
+            alert("Por favor, selecione um projeto para continuar.");
+        }
+    }
+
+    // Função para abrir o modal de edição
+    function abrirModal() {
+        if (projetoSelecionado) {
+            document.getElementById('modalNome').value = projetoSelecionado.nome_projeto;
+            document.getElementById('modalCidade').value = projetoSelecionado.cidade;
+            document.getElementById('modalEmpresa').value = projetoSelecionado.empresa;
+            document.getElementById('modalConcessionaria').value = projetoSelecionado.concessionaria;
+            document.getElementById('modalStatus').value = projetoSelecionado.status;
+
+            document.getElementById('editModal').style.display = 'block';
+            verificarCamposModal();
+        }
+    }
+
+    // Função para fechar o modal de edição
+    document.getElementById('closeModal').onclick = function () {
+        document.getElementById('editModal').style.display = 'none';
+    };
+
+    // Função para verificar campos do modal de edição
+    function verificarCamposModal() {
+        const nomeProjeto = document.getElementById('modalNome').value;
+        const cidade = document.getElementById('modalCidade').value;
+        const empresa = document.getElementById('modalEmpresa').value;
+        const concessionaria = document.getElementById('modalConcessionaria').value;
+
+        const botaoSalvar = document.getElementById('saveBtn');
+        botaoSalvar.disabled = !nomeProjeto || !cidade || !empresa || !concessionaria;
+    }
+
+    // Função para salvar o projeto editado
+    function salvarProjetoEditado() {
+        const nome_projeto = document.getElementById('modalNome').value;
+        const cidade = document.getElementById('modalCidade').value;
+        const empresa = document.getElementById('modalEmpresa').value;
+        const concessionaria = document.getElementById('modalConcessionaria').value;
+        const status = document.getElementById('modalStatus').value;
+
+        fetch(`https://us-central1-akraquercem.cloudfunctions.net/api/projetos/editar-projeto/${projetoSelecionadoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome_projeto, cidade, empresa, concessionaria, status })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => {
+                    throw new Error(errData.message || 'Erro desconhecido ao atualizar o projeto.');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Projeto atualizado com sucesso!');
+                fetchProjects(); // Atualiza a lista de projetos
+                document.getElementById('editModal').style.display = 'none';
+            } else {
+                alert('Erro ao atualizar o projeto.');
+            }
+        })
+        .catch(error => {
+            alert(`Erro ao salvar projeto: ${error.message}`);
+        });
+    }
+
+    // Função para carregar projetos e habilitar seleção
+    function fetchProjects(query = '', page = 1, status = '') {
+        const loadingElement = document.getElementById('loading');
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.innerHTML = '';
+
+        if (loadingElement) loadingElement.style.display = 'block';
+
+        fetch(`https://us-central1-akraquercem.cloudfunctions.net/api/projetos`)
+        .then(response => {
+            if (loadingElement) loadingElement.style.display = 'none';
+            if (!response.ok) {
+                return response.json().then(errData => {
+                    throw new Error(errData.message || 'Erro desconhecido ao buscar projetos.');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tableBody = document.querySelector('#projetosTable tbody');
+            tableBody.innerHTML = '';
+
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5">Nenhum projeto encontrado.</td></tr>';
+                return;
+            }
+
+            data.forEach(projeto => {
+                const row = document.createElement('tr');
+                row.dataset.id = projeto.id;
+                row.innerHTML = `
+                    <td>${projeto.nome_projeto}</td>
+                    <td>${projeto.cidade}</td>
+                    <td>${projeto.empresa}</td>
+                    <td>${projeto.concessionaria}</td>
+                    <td>${projeto.status}</td>
+                `;
+                row.onclick = function () {
+                    selecionarProjeto(projeto);
+                };
+
+                tableBody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            if (loadingElement) loadingElement.style.display = 'block';
+            errorMessage.innerHTML = `Erro: ${error.message}`;
+        });
+    }
+
+    // Função para selecionar um projeto
+    function selecionarProjeto(projeto) {
+        projetoSelecionadoId = projeto.id;
+        projetoSelecionado = projeto;
+
+        const rows = document.querySelectorAll('#projetosTable tr');
+        rows.forEach(row => row.classList.remove('selected-row'));
+
+        const selectedRow = document.querySelector(`tr[data-id="${projeto.id}"]`);
+        selectedRow.classList.add('selected-row');
+
+        document.getElementById('continuarBtn').disabled = false;
+        document.getElementById('editarBtn').disabled = false;
+        document.getElementById('concluirBtn').disabled = false;
+        document.getElementById('relatorioBtn').disabled = false;
+        document.getElementById('excluirBtn').disabled = false;
+    }
+
+    // Função para concluir o projeto
+    function concluirProjeto() {
+        if (projetoSelecionadoId && confirm("Tem certeza de que deseja concluir este projeto?")) {
+            fetch(`https://us-central1-akraquercem.cloudfunctions.net/api/projetos/concluir-projeto/${projetoSelecionadoId}`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao concluir o projeto. Status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('Projeto concluído com sucesso!');
+                    fetchProjects(); // Atualiza a lista de projetos
+                } else {
+                    alert('Erro ao concluir o projeto.');
+                }
+            })
+            .catch(error => {
+                alert(`Erro ao concluir o projeto: ${error.message}`);
+            });
+        }
+    }
+
+    // Função para excluir o projeto selecionado
+    function excluirProjetoSelecionado() {
+        if (projetoSelecionadoId && confirm("Tem certeza de que deseja excluir este projeto?")) {
+            fetch(`https://us-central1-akraquercem.cloudfunctions.net/api/projetos/excluir-projeto/${projetoSelecionadoId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errData => {
+                        throw new Error(errData.message || 'Erro desconhecido ao excluir o projeto.');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('Projeto excluído com sucesso!');
+                    fetchProjects(); // Atualiza a lista de projetos
+                } else {
+                    alert('Erro ao excluir o projeto.');
+                }
+            })
+            .catch(error => {
+                alert(`Erro ao excluir projeto: ${error.message}`);
+            });
+        } else if (!projetoSelecionadoId) {
+            alert("Nenhum projeto selecionado para exclusão.");
+        }
+    }
+
+    // Carrega os projetos ao carregar a página
+    window.onload = function () {
+        fetchProjects();
+    };
+
+    </script>
+
+</body>
+
+</html>

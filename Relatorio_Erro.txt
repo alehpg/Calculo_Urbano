@@ -1,0 +1,5 @@
+>>>>>> Relatorio de erros <<<<<<<<<<
+
+1- O site falta fazer com que a estilização do site acompanhe
+ o processo certinho, ele segue o passo a passo porem ele não
+ tem a estilização junto.

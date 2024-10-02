@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Exemplo</title>
+    <link rel="stylesheet" href="css/style_corpo.css">
+</head>
+
+<body>
+
+    <!-- Modal para coletar informações do poste -->
+    <div id="postModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>CARACTERÍSTICAS DO POSTE</h2>
+
+            <div class="form-group">
+                <label for="numeroPoste">Nº do Poste</label>
+                <input type="text" id="numeroPoste">
+            </div>
+
+            <div class="form-row">
+                <div class="radio-group">
+                    <h4>Tipo</h4>
+                    <label><input type="radio" name="tipoPoste" value="SC"> Poste SC</label>
+                    <label><input type="radio" name="tipoPoste" value="Madeira"> Poste Madeira</label>
+                    <label><input type="radio" name="tipoPoste" value="DT"> Poste DT</label>
+                    <label><input type="radio" name="tipoPoste" value="Aço"> Poste AÇO</label>
+                </div>
+
+                <div class="radio-group">
+                    <h4>Altura (m)</h4>
+                    <label><input type="radio" name="altura" value="9"> 9</label>
+                    <label><input type="radio" name="altura" value="10"> 10</label>
+                    <label><input type="radio" name="altura" value="11"> 11</label>
+                    <label><input type="radio" name="altura" value="12"> 12</label>
+                    <label><input type="radio" name="altura" value="13"> 13</label>
+                    <label><input type="radio" name="altura" value="15"> 15</label>
+                    <label><input type="radio" name="altura" value="18"> 18</label>
+                </div>
+
+                <div class="radio-group">
+                    <h4>Capacidade (daN)</h4>
+                    <label><input type="radio" name="capacidade" value="100"> 100</label>
+                    <label><input type="radio" name="capacidade" value="150"> 150</label>
+                    <label><input type="radio" name="capacidade" value="200"> 200</label>
+                    <label><input type="radio" name="capacidade" value="300"> 300</label>
+                    <label><input type="radio" name="capacidade" value="400"> 400</label>
+                    <label><input type="radio" name="capacidade" value="450"> 450</label>
+                    <label><input type="radio" name="capacidade" value="600"> 600</label>
+                    <label><input type="radio" name="capacidade" value="1000"> 1000</label>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button id="confirmar">CONFIRMAR</button>
+                <button id="sair">SAIR</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="forces-container" id="forces-container"></div>
+
+    <div class="buttons">
+        <button id="calcular">CALCULAR</button>
+        <button id="salvar">SALVAR</button>
+    </div>
+
+    <div class="results">
+        <p>Resultado: <span class="value" id="resultado"></span></p>
+    </div>
+
+    <!-- Colocar o JavaScript após o carregamento do conteúdo da página -->
+    <script>
+        let projetoId = getProjetoIdFromURL(); // Obtém o projeto ID
+        let posteData = {}; // Armazenar dados temporários do poste
+
+        // Função para obter o projetoId da URL
+        function getProjetoIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('projetoId');
+        }
+
+        // Função para exibir o modal ao carregar a página
+        window.onload = function () {
+            document.getElementById('postModal').style.display = "block";
+            document.getElementById('confirmar').addEventListener('click', confirmarDados);
+            document.getElementById('sair').addEventListener('click', sairModal);
+            document.getElementById('calcular').addEventListener('click', calcularResultante);
+            document.getElementById('salvar').addEventListener('click', salvar);
+        };
+
+        // Função para confirmar dados do modal e fechar o modal
+        function confirmarDados() {
+            const numeroPoste = parseInt(document.getElementById("numeroPoste").value);
+            const tipoPoste = document.querySelector('input[name="tipoPoste"]:checked')?.value;
+            const altura = document.querySelector('input[name="altura"]:checked')?.value;
+            const capacidade = document.querySelector('input[name="capacidade"]:checked')?.value;
+
+            if (numeroPoste && tipoPoste && altura && capacidade) {
+                posteData = {
+                    numeroPoste,
+                    tipoPoste,
+                    altura,
+                    capacidade,
+                    projetoId
+                };
+
+                document.getElementById("postModal").style.display = "none";
+                generateForceInputs(); // Gera os inputs para as forças
+            } else {
+                alert('Por favor, preencha todos os campos do poste.');
+            }
+        }
+
+        // Função para fechar o modal
+        function sairModal() {
+            document.getElementById("postModal").style.display = "none";
+        }
+
+        // Função para gerar os inputs de força
+        function generateForceInputs() {
+            const forceData = [
+                { id: 'F1', estaioId: 1 },
+                { id: 'F2', estaioId: 2 },
+                { id: 'F3', estaioId: 3 },
+                { id: 'F4', estaioId: 4 },
+                { id: 'F5', estaioId: 5 }
+            ];
+
+            const forcesContainer = document.getElementById('forces-container');
+            forcesContainer.innerHTML = ''; // Limpar os campos existentes
+            forceData.forEach(force => {
+                const forceHTML = `
+                  <div class="force-input" id="${force.id}">
+                    <h3>FORÇA ${force.estaioId}</h3>
+                    <section class="vao-ang">
+                        <label for="span${force.estaioId}_${force.id}">Vão:</label>
+                        <input type="number" id="span${force.estaioId}_${force.id}">
+                        <label for="angle${force.estaioId}_${force.id}">Ângulo:</label>
+                        <input type="number" id="angle${force.estaioId}_${force.id}">
+                    </section>
+                    <!-- Seções para Rede MT, Rede BT, Estaio, Uso Mútuo aqui -->
+                </div>
+                `;
+                forcesContainer.innerHTML += forceHTML;
+            });
+        }
+
+        // Função para calcular a resultante das forças
+        function calcularResultante() {
+            let xResultante = 0;
+            let yResultante = 0;
+
+            const forceData = [
+                { id: 'F1', estaioId: 1 },
+                { id: 'F2', estaioId: 2 },
+                { id: 'F3', estaioId: 3 },
+                { id: 'F4', estaioId: 4 },
+                { id: 'F5', estaioId: 5 }
+            ];
+
+            forceData.forEach(force => {
+                let angulo = parseFloat(document.getElementById(`angle${force.estaioId}_${force.id}`)?.value) || 0;
+                let vao = parseFloat(document.getElementById(`span${force.estaioId}_${force.id}`)?.value) || 0;
+                let rad = angulo * Math.PI / 180;
+
+                let x = vao * Math.cos(rad);
+                let y = vao * Math.sin(rad);
+
+                xResultante += x;
+                yResultante += y;
+            });
+
+            const magnitudeResultante = Math.sqrt(xResultante * xResultante + yResultante * yResultante);
+            const anguloResultante = Math.atan2(yResultante, xResultante) * 180 / Math.PI;
+
+            document.getElementById('resultado').innerText = `Vetor Resultante: ${magnitudeResultante.toFixed(2)}, Ângulo: ${anguloResultante.toFixed(2)}°`;
+        }
+
+        // Função para salvar as informações do poste e das forças
+        function salvar() {
+            if (!verificarForcasPreenchidas()) {
+                alert('Por favor, insira pelo menos uma força antes de salvar.');
+                return;
+            }
+
+            // Coletar as informações das forças
+            const forceData = [
+                { id: 'F1', estaioId: 1 },
+                { id: 'F2', estaioId: 2 },
+                { id: 'F3', estaioId: 3 },
+                { id: 'F4', estaioId: 4 },
+                { id: 'F5', estaioId: 5 }
+            ];
+
+            const forces = forceData.map(force => {
+                const vao = parseFloat(document.getElementById(`span${force.estaioId}_${force.id}`).value) || 0;
+                const angulo = parseFloat(document.getElementById(`angle${force.estaioId}_${force.id}`).value) || 0;
+                return { estaioId: force.estaioId, vao, angulo };
+            });
+
+            const data = {
+                posteData,
+                forces
+            };
+
+            // Simular salvamento (aqui você pode fazer uma requisição AJAX para salvar os dados no servidor)
+            console.log('Dados a serem salvos:', data);
+            alert('Poste e forças salvos com sucesso!');
+        }
+
+        // Função para verificar se pelo menos uma força foi preenchida
+        function verificarForcasPreenchidas() {
+            const forceInputs = document.querySelectorAll('.force-input input');
+            return Array.from(forceInputs).some(input => input.value !== '');
+        }
+    </script>
+
+</body>
+
+</html>

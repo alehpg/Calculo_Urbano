@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Esforço Urbano</title>
+    <link rel="shortcut icon" href="/img/favicon.png" type="image/x-icon">
+    <script src="https://unpkg.com/pdf-lib@1.16.0/dist/pdf-lib.min.js"></script>
+
+    <style>
+        /* Reseta alguns padrões de estilo do navegador */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 20px;
+            background-color: #4CAF50;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .forces-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            padding: 0 20px;
+        }
+
+        .force-input {
+            width: 250px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .force-input h3 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            color: #4CAF50;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        /* Botões */
+        .button {
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        /* Centralizar botões e resultado */
+        #buttons {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        #resultado {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Layout responsivo */
+        @media (max-width: 768px) {
+            .forces-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .force-input {
+                width: 90%;
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .force-input {
+                width: 45%;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .force-input {
+                width: 30%;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <h1>Calculadora de Esforço Urbano</h1>
+
+    <div class="forces-container" id="forces-container">
+        <!-- Força Layouts Gerados com Loop -->
+    </div>
+
+    <!-- Botões -->
+    <div id="buttons">
+        <button class="button" id="calculate">Calcular</button>
+        <button class="button" id="generatePdf">Gerar PDF</button>
+        <button class="button" id="logout">Log out</button>
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        const forceData = [
+            { id: 'F1', estaioId: 1 },
+            { id: 'F2', estaioId: 2 },
+            { id: 'F3', estaioId: 3 },
+            { id: 'F4', estaioId: 4 },
+            { id: 'F5', estaioId: 5 }
+        ];
+
+        function createForceHTML(force) {
+            return `
+                <div class="force-input" id="${force.id}">
+                    <h3>FORÇA ${force.estaioId}</h3>
+                    <section class="vao-ang">
+                        <label for="span${force.estaioId}_${force.id}">Vão:</label>
+                        <input type="number" id="span${force.estaioId}_${force.id}" value="">
+                        <label for="angle${force.estaioId}_${force.id}">Ângulo:</label>
+                        <input type="number" id="angle${force.estaioId}_${force.id}" value="">
+                    </section>
+                    <div class="RedeDentrega">
+                        <h3>Rede de Energia</h3>
+                        <p>Rede MT</p>
+                        <select name="rede_mt_${force.id}" id="rede_mt_${force.id}">
+                            <option value="0">Selecione</option>
+                            <option value="415">3#50+9,5</option>
+                            <option value="255">1#50+9,6</option>
+                            <option value="517">3#150+9,7</option>
+                            <option value="58">1#4</option>
+                            <option value="116">2#4</option>
+                            <option value="174">3#4</option>
+                            <option value="92">1#2</option>
+                            <option value="184">2#2</option>
+                            <option value="276">3#2</option>
+                        </select>
+
+                        <p>Rede BT</p>
+                        <select name="rede_bt_${force.id}" id="rede_bt_${force.id}">
+                            <option value="0">Selecione</option>
+                            <option value="114">2x1x35+70</option>
+                            <option value="181">2x1x70+70</option>
+                            <option value="161">3x1x35+70</option>
+                            <option value="245">3x1x70+70</option>
+                            <option value="381">3x1x120+70</option>
+                        </select>
+
+                        <p>Nível da cruzeta MT</p>
+                        <select name="nivel_cruzeta_mt_${force.id}" id="nivel_cruzeta_mt_${force.id}">
+                            <option value="1">NIVEL 1</option>
+                            <option value="0.96">NIVEL 2</option>
+                            <option value="0.86">NIVEL 3</option>
+                        </select>
+                    </div>
+                    <section class="estaio estaio-section">
+                        <h3>Estaio ${force.estaioId}</h3>
+                        <input type="radio" id="estaio_sim${force.estaioId}" name="estaio${force.estaioId}" value="sim"> Sim
+                        <input type="radio" id="estaio_nao${force.estaioId}" name="estaio${force.estaioId}" value="nao"> Não
+                        <select id="estaio_${force.id}">
+                            <option value="0">Selecione</option>
+                            <option value="CZ-CZ">CZ-CZ</option>
+                            <option value="MT-BT">MT-BT</option>
+                            <option value="BT-BT">BT-BT</option>
+                            <option value="MT-PCP">MT-PCP</option>
+                            <option value="BT-PCP">BT-PCP</option>
+                        </select>
+                        <input type="number" id="estaio_${force.estaioId}">
+                    </section>
+                    <section class="usoMutuo">
+                        <h3>Uso Mútuo</h3>
+                        <select id="usoMutuo_${force.id}">
+                            <option value="opcao1">Opção 1</option>
+                            <option value="opcao2">Opção 2</option>
+                        </select>
+                    </section>
+                </div>
+            `;
+        }
+
+        // Gera o HTML para todas as forças de forma dinâmica
+        const forcesContainer = document.getElementById('forces-container');
+        forceData.forEach(force => {
+            forcesContainer.innerHTML += createForceHTML(force);
+        });
+
+        // Funções para cálculo e manipulação
+        document.getElementById('calculate').addEventListener('click', () => {
+            let xResultante = 0, yResultante = 0;
+
+            forceData.forEach(force => {
+                const vao = parseFloat(document.getElementById(`span${force.estaioId}_${force.id}`).value) || 0;
+                const angulo = parseFloat(document.getElementById(`angle${force.estaioId}_${force.id}`).value) || 0;
+
+                let rad = angulo * Math.PI / 180;
+                let x = vao * Math.cos(rad);
+                let y = vao * Math.sin(rad);
+
+                xResultante += x;
+                yResultante += y;
+            });
+
+            const magnitudeResultante = Math.sqrt(xResultante * xResultante + yResultante * yResultante);
+            const anguloResultante = Math.atan2(yResultante, xResultante) * 180 / Math.PI;
+            document.getElementById('resultado').innerText = `Resultante: ${magnitudeResultante.toFixed(2)}, Ângulo: ${anguloResultante.toFixed(2)}°`;
+        });
+
+        document.getElementById('generatePdf').addEventListener('click', () => {
+            // Exemplo de geração de PDF usando PDF-lib
+            const { PDFDocument, rgb } = PDFLib;
+
+            async function generatePDF() {
+                const pdfDoc = await PDFDocument.create();
+                const page = pdfDoc.addPage([600, 400]);
+
+                page.drawText('Relatório de Esforços', {
+                    x: 50,
+                    y: 350,
+                    size: 24,
+                    color: rgb(0, 0, 0)
+                });
+
+                let yPos = 300;
+                forceData.forEach(force => {
+                    const vao = document.getElementById(`span${force.estaioId}_${force.id}`).value;
+                    const angulo = document.getElementById(`angle${force.estaioId}_${force.id}`).value;
+
+                    page.drawText(`Força ${force.estaioId} - Vão: ${vao}, Ângulo: ${angulo}`, {
+                        x: 50,
+                        y: yPos,
+                        size: 12,
+                        color: rgb(0, 0, 0)
+                    });
+                    yPos -= 20;
+                });
+
+                const pdfBytes = await pdfDoc.saveAsBase64({ dataUri: true });
+                window.open(pdfBytes);
+            }
+
+            generatePDF();
+        });
+
+        document.getElementById('logout').addEventListener('click', () => {
+            window.location.href = '/logout'; // URL para logout
+        });
+    </script>
+
+</body>
+
+</html>
