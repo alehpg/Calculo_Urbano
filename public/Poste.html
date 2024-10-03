@@ -134,15 +134,68 @@
             forcesContainer.innerHTML = ''; // Limpar os campos existentes
             forceData.forEach(force => {
                 const forceHTML = `
-                  <div class="force-input" id="${force.id}">
+                <div class="force-input" id="${force.id}">
                     <h3>FORÇA ${force.estaioId}</h3>
                     <section class="vao-ang">
                         <label for="span${force.estaioId}_${force.id}">Vão:</label>
-                        <input type="number" id="span${force.estaioId}_${force.id}">
+                        <input type="number" id="span${force.estaioId}_${force.id}" value="">
                         <label for="angle${force.estaioId}_${force.id}">Ângulo:</label>
-                        <input type="number" id="angle${force.estaioId}_${force.id}">
+                        <input type="number" id="angle${force.estaioId}_${force.id}" value="">
                     </section>
-                    <!-- Seções para Rede MT, Rede BT, Estaio, Uso Mútuo aqui -->
+                    <div class="RedeDentrega">
+                        <h3>Rede de Energia</h3>
+                        <p>Rede MT</p>
+                        <select name="rede_mt_${force.id}" id="rede_mt_${force.id}">
+                            <option value="0">Selecione</option>
+                            <option value="415">3#50+9,5</option>
+                            <option value="255">1#50+9,6</option>
+                            <option value="517">3#150+9,7</option>
+                            <option value="58">1#4</option>
+                            <option value="116">2#4</option>
+                            <option value="174">3#4</option>
+                            <option value="92">1#2</option>
+                            <option value="184">2#2</option>
+                            <option value="276">3#2</option>
+                        </select>
+
+                        <p>Rede BT</p>
+                        <select name="rede_bt_${force.id}" id="rede_bt_${force.id}">
+                            <option value="0">Selecione</option>
+                            <option value="114">2x1x35+70</option>
+                            <option value="181">2x1x70+70</option>
+                            <option value="161">3x1x35+70</option>
+                            <option value="245">3x1x70+70</option>
+                            <option value="381">3x1x120+70</option>
+                        </select>
+
+                        <p>Nível da cruzeta MT</p>
+                        <select name="nivel_cruzeta_mt_${force.id}" id="nivel_cruzeta_mt_${force.id}">
+                            <option value="1">NIVEL 1</option>
+                            <option value="0.96">NIVEL 2</option>
+                            <option value="0.86">NIVEL 3</option>
+                        </select>
+                    </div>
+                    <section class="estaio estaio-section">
+                        <h3>Estaio ${force.estaioId}</h3>
+                        <input type="radio" id="estaio_sim${force.estaioId}" name="estaio${force.estaioId}" value="sim"> Sim
+                        <input type="radio" id="estaio_nao${force.estaioId}" name="estaio${force.estaioId}" value="nao"> Não
+                        <select id="estaio_${force.id}">
+                            <option value="0">Selecione</option>
+                            <option value="CZ-CZ">CZ-CZ</option>
+                            <option value="MT-BT">MT-BT</option>
+                            <option value="BT-BT">BT-BT</option>
+                            <option value="MT-PCP">MT-PCP</option>
+                            <option value="BT-PCP">BT-PCP</option>
+                        </select>
+                        <input type="number" id="estaio_${force.estaioId}">
+                    </section>
+                    <section class="usoMutuo">
+                        <h3>Uso Mútuo</h3>
+                        <select id="usoMutuo_${force.id}">
+                            <option value="opcao1">Opção 1</option>
+                            <option value="opcao2">Opção 2</option>
+                        </select>
+                    </section>
                 </div>
                 `;
                 forcesContainer.innerHTML += forceHTML;
